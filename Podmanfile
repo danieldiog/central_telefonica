@@ -2,8 +2,10 @@ FROM rockylinux:latest
 
 RUN dnf -y groupinstall "Development Tools"
 RUN dnf config-manager --set-enabled powertools
+RUN dnf -y copr enable irontec/sngrep
 RUN dnf install -y \
     gcc \
+    sngrep \
     gcc-c++ \
     make \
     wget \
@@ -17,12 +19,23 @@ RUN dnf install -y \
     openssl-devel \
     git \
     patch \
+    vim \
+    tcpdump \
+    iproute \
+    sudo \
     && dnf clean all
 
 RUN alias ll='ls -l'
 
+# Criar usuário e grupo asterisk
+RUN groupadd -g 5000 asterisk && \
+    useradd -r -u 5000 -g asterisk -d /home/asterisk -s /bin/bash asterisk
+
+RUN echo "asterisk    ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/asterisk
+# Configurar diretório de trabalho
 WORKDIR /usr/src
-#Instalar e compilar jansson
+
+# Instalar e compilar Jansson
 RUN git clone https://github.com/akheron/jansson.git && \
     cd jansson && \
     autoreconf -i && \
@@ -34,7 +47,7 @@ RUN git clone https://github.com/akheron/jansson.git && \
 RUN curl -O http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-20.10.0.tar.gz && \
     tar zxvf asterisk-20.10.0.tar.gz && \
     cd asterisk-20.10.0 && \
-    ./contrib/scripts/install_prereq install  && \
+    ./contrib/scripts/install_prereq install && \
     ./configure --libdir=/usr/lib64 --with-jansson-bundled && \
     ./contrib/scripts/get_mp3_source.sh && \
     make && \
@@ -42,8 +55,17 @@ RUN curl -O http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-20.10.
     make samples && \
     make config && \
     make install-logrotate
-# Expor porta do Asterisk
-EXPOSE 5060/udp 5060/tcp 5038/tcp 3478/udp 3478/tcp 443/tcp 10000-20000/udp
 
+# Ajustar permissões
+RUN chown -R asterisk:asterisk \
+        /etc/asterisk \
+        /var/{lib,log,spool,run,cache}/asterisk \
+        /usr/lib64/asterisk
+
+# Definir usuário para execução
+USER asterisk
+
+WORKDIR /home/asterisk
+RUN cp -rp /etc/skel/.bashrc /etc/skel/.bash_profile /etc/skel/.bash_logout .
 # Iniciar o Asterisk
 CMD ["asterisk", "-f", "-vvv"]
