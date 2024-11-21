@@ -2,8 +2,10 @@ FROM rockylinux:latest
 
 RUN dnf -y groupinstall "Development Tools"
 RUN dnf config-manager --set-enabled powertools
+RUN dnf -y copr enable irontec/sngrep
 RUN dnf install -y \
     gcc \
+    sngrep \
     gcc-c++ \
     make \
     wget \
@@ -18,14 +20,18 @@ RUN dnf install -y \
     git \
     patch \
     vim \
+    tcpdump \
+    iproute \
+    sudo \
     && dnf clean all
 
 RUN alias ll='ls -l'
 
 # Criar usuário e grupo asterisk
 RUN groupadd -g 5000 asterisk && \
-    useradd -r -u 5000 -g asterisk -d /var/lib/asterisk -s /sbin/nologin asterisk
+    useradd -r -u 5000 -g asterisk -d /home/asterisk -s /bin/bash asterisk
 
+RUN echo "asterisk    ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/asterisk
 # Configurar diretório de trabalho
 WORKDIR /usr/src
 
@@ -53,11 +59,13 @@ RUN curl -O http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-20.10.
 # Ajustar permissões
 RUN chown -R asterisk:asterisk \
         /etc/asterisk \
-        /var/{lib,log,spool,run}/asterisk \
+        /var/{lib,log,spool,run,cache}/asterisk \
         /usr/lib64/asterisk
 
 # Definir usuário para execução
 USER asterisk
 
+WORKDIR /home/asterisk
+RUN cp -rp /etc/skel/.bashrc /etc/skel/.bash_profile /etc/skel/.bash_logout .
 # Iniciar o Asterisk
 CMD ["asterisk", "-f", "-vvv"]
