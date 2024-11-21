@@ -1,0 +1,32 @@
+FROM rockylinux
+
+ENV POSTGRES_VERSION=17
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_DB=appdb
+ENV PGDATA=/var/lib/pgsql/data
+
+# Instalação do PostgreSQL
+RUN dnf update -y && \
+    dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm && \
+    dnf clean all && \
+    dnf -qy module disable postgresql && \
+    dnf install -y postgresql17-server bash sudo
+
+# Configuração do diretório de dados com permissões adequadas
+RUN mkdir -p $PGDATA && \
+    chmod 700 $PGDATA && \
+    chown -R postgres:postgres /var/lib/pgsql
+
+# Alterar para o usuário postgres e inicializar o banco de dados
+
+COPY entrypointdb.sh /usr/local/bin/entrypointbd.sh
+RUN chmod +x /usr/local/bin/entrypointbd.sh
+ENTRYPOINT ["/usr/local/bin/entrypointbd.sh"]
+
+# Expor a porta do PostgreSQL
+EXPOSE 5432
+
+USER postgres
+# Configurar o comando de inicialização
+CMD ["/usr/pgsql-17/bin/postgres", "-D", "/var/lib/pgsql/data"]
