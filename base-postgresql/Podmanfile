@@ -16,17 +16,17 @@ RUN dnf update -y && \
 # Configuração do diretório de dados com permissões adequadas
 RUN mkdir -p $PGDATA && \
     chmod 700 $PGDATA && \
-    chown -R postgres:postgres /var/lib/pgsql
+    chown -R postgres:postgres $PGDATA
 
-# Alterar para o usuário postgres e inicializar o banco de dados
-
-COPY entrypointdb.sh /usr/local/bin/entrypointbd.sh
-RUN chmod +x /usr/local/bin/entrypointbd.sh
-ENTRYPOINT ["/usr/local/bin/entrypointbd.sh"]
+# Copiar scripts e arquivos de configuração
+COPY entrypointdb.sh /usr/local/bin/entrypointdb.sh
+COPY conf-db/pg_hba.conf /tmp/pg_hba.conf
+COPY conf-db/postgresql.conf /tmp/postgresql.conf
+RUN chmod +x /usr/local/bin/entrypointdb.sh
 
 # Expor a porta do PostgreSQL
 EXPOSE 5432
 
+# Configurar o ponto de entrada
 USER postgres
-# Configurar o comando de inicialização
-CMD ["/usr/pgsql-17/bin/postgres", "-D", "/var/lib/pgsql/data"]
+ENTRYPOINT ["/usr/local/bin/entrypointdb.sh"]

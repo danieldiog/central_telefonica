@@ -1,0 +1,44 @@
+---
+version: "3.8"
+
+services:
+  central:
+    image: asterisk22-rocky:1.0.0
+    container_name: central
+    ports:
+      - "5060:5060/udp"
+      - "10000-20000:10000-20000/udp"
+    volumes:
+      - gravacoes:/var/spool/asterisk
+      - asterisk-log:/var/log/asterisk
+      - cache-asterisk:/var/cache/asterisk
+      - asterisk-config:/etc/asterisk
+      - var-config-asterisk:/var/lib/asterisk
+    networks:
+      ast:
+        ipv4_address: 10.89.0.2
+
+  db-central:
+    image: postgresql17
+    container_name: db-central
+    volumes:
+      - config-db:/var/lib/pgsql/data
+    networks:
+      ast:
+        ipv4_address: 10.89.0.3
+
+volumes:
+  gravacoes:
+  asterisk-log:
+  cache-asterisk:
+  asterisk-config:
+  var-config-asterisk:
+  config-db:
+
+networks:
+  ast:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.89.0.0/24
+
