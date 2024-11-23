@@ -1,1 +1,0 @@
-podman run -it -d --name db-central -v config-db:/var/lib/pgsql/data postgresql17

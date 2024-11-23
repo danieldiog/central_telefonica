@@ -1,0 +1,1 @@
+podman run -it -d --name db-central --net ast --ip 10.89.1.3 -v config-db:/var/lib/pgsql/data postgresql17:1.0.0
