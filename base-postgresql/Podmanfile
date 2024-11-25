@@ -6,27 +6,27 @@ ENV POSTGRES_PASSWORD=postgres
 ENV POSTGRES_DB=appdb
 ENV PGDATA=/var/lib/pgsql/data
 
-# Instalação do PostgreSQL
+# Instalação do PostgreSQL-17
 RUN dnf update -y && \
     dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm && \
     dnf clean all && \
     dnf -qy module disable postgresql && \
     dnf install -y postgresql17-server bash sudo
 
-# Configuração do diretório de dados com permissões adequadas
+# Configuração do diretório padrão
 RUN mkdir -p $PGDATA && \
     chmod 700 $PGDATA && \
     chown -R postgres:postgres $PGDATA
 
-# Copiar scripts e arquivos de configuração
+# Arquivos de conf Default
 COPY entrypointdb.sh /usr/local/bin/entrypointdb.sh
 COPY conf-db/pg_hba.conf /tmp/pg_hba.conf
 COPY conf-db/postgresql.conf /tmp/postgresql.conf
 RUN chmod +x /usr/local/bin/entrypointdb.sh
 
-# Expor a porta do PostgreSQL
+# Expor porta do banco
 EXPOSE 5432
 
-# Configurar o ponto de entrada
+# Iniciar o postgres com os parâmetros corretos
 USER postgres
 ENTRYPOINT ["/usr/local/bin/entrypointdb.sh"]
