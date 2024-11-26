@@ -1,4 +1,4 @@
-FROM rockylinux:latest
+FROM rockylinux/rockylinux:8
 
 RUN dnf -y update && dnf clean all
 RUN dnf -y groupinstall "Development Tools"
@@ -24,6 +24,9 @@ RUN dnf install -y \
     tcpdump \
     iproute \
     sudo \
+    httpd \
+    nano \
+    procps-ng \
     && dnf clean all
 
 RUN alias ll='ls -l'
